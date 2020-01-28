@@ -83,7 +83,7 @@
                 <button class="tablink" onclick="openPage('Home')" id="defaultOpen">Home</button>
                 <button class="tablink" onclick="openPage('Browse')">Browse</button>
                 <button class="tablink" onclick="openPage('Account')">Account</button>
-                
+                <!--            HOME              -->
                 <div id="Home" class="tabcontent">
                     <!-- 1. The signed-in user’s personal information provided at sign-up process except the password.
                         2. A text area and a post button which the user can use to post messages to his/her own wall.
@@ -91,7 +91,7 @@
                         4. A button to reload only the wall in order to see the newly posted messages by other users. -->
                     
                     <div id="home-container"> 
-                        <div id="personalInfo">
+                        <div class="personalInfo">
                             <h5>Personal Info</h5>
                             <label>Name: </label>
                             <div id="LName"></div>
@@ -132,18 +132,41 @@
                         
                     </div>
                 </div>
-                  
+                <!--            BROWSE              -->
                 <div id="Browse" class="tabcontent">
                     <form name="searchUserForm" onsubmit="return searchUser(this)" method="post">
                         <label for="searchEmail"><b>Email</b></label>
                             <input type="email" name="searchEmail" required>
                         <button class="button" type="submit" value="searchUserValue">Search</button>
                     </form>
-                    <div id="searchedUserInfo"> 
-                        
+                     
+                    <div id="otherUser-container"> 
+                        <div class="personalInfo">
+                            <h5>Other user's info:</h5>
+                            <label>Name: </label>
+                            <div id="LName"></div>
+
+                            <label>Family name: </label>
+                            <div id="LFamilyName"></div>
+
+                            <label>Gender: </label>
+                            <div id="LGender"></div>
+
+                            <label>City: </label>
+                            <div id="LCity"></div>
+
+                            <label>Country: </label>
+                            <div id="LCountry"></div>
+
+                            <label>Email: </label>
+                            <div id="LEmail"></div>
+                        </div>
+                        <div id="otherUserPosts">
+                            otherUserPosts
+                        </div>
                     </div>
                 </div>
-                
+                <!--            ACCOUNT              -->
                 <div id="Account" class="tabcontent">
                     <p>Here you can change your password and sign out.</p>
                     <div id="changePwd-container"> 
