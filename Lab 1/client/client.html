@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title>TDDD97 Labs by Samuel</title>
+        <link href="../css/client.css" type="text/css" rel="stylesheet">
+        <script src="./client.js"></script>
+        <script src="../serverstub.js"></script>
+        <!-- WELCOME VIEW  -->
+        <script id="welcomeview" type="text/view">
+            <!-- CONTAINER -->
+            <div class="main-container">
+                <div class ="lhs-container">
+                    <!-- IMAGE SLOGAN -->
+                    <img src="../wimage.png" alt="Logo" class="Logo">
+                </div>
+                <div class="rhs-container">
+                    <!--                        LOGIN                             -->
+                    <div class="login-container">
+                        <form name="logIn" onsubmit="return logInValidation(this)">               
+                            <!-- input type "email" will make sure proper email address is used
+                                :valid and :invalid CSS pseudo-classes are automatically applied  -->
+                            <label for="logInEmail"><b>Email</b></label>
+                            <input type="email" name="logInEmail" required>
+                        
+                            <label for="loginPwd"><b>Password</b></label>
+                            <input type="password" name="loginPwd" required>
+                            <span id="signInMessage" style="color: red"></span>
+                            <button type="submit" class="loginBtn" value="logInValue">Login</button>
+                        </form>
+                    </div>
+                    <!--                        SIGN UP                            -->
+                    <div class="signup-container">
+                        <form name="signUp" onsubmit="return signUpValidation(this)" method="post">
+                            <h3 align="center">Sign up here</h3>
+
+                            <label for="firstName"><b>First name</b></label>
+                            <input type="text" name="firstName" required>
+
+                            <label for="familyName"><b>Family name</b></label>
+                            <input type="text" name="familyName" required>
+
+                            <label for="gender"><b>Gender</b></label>
+                            <select name="gender">
+                                <option value="0">Select gender:</option>
+                                <option value="1">Male</option>
+                                <option value="2">Female</option>
+                                <option value="3">Other</option>
+                                </select>
+
+                            <label for="city"><b>City</b></label>
+                            <input type="text" name="city" required>
+
+                            <label for="country"><b>Country</b></label>
+                            <input type="text" name="country" required>
+                                
+                            <!-- input type "email" will make sure proper email address is used 
+                                :valid and :invalid CSS pseudo-classes are automatically applied -->
+                            <label for="signUpEmail"><b>Email</b></label>
+                            <input type="email" name="signUpEmail" required>
+
+                            <label for="signUpPwd"><b>Password</b></label>
+                            <input type="password" name="signUpPwd" onkeyup="checkSignInPassword(this.value)" required>
+                        
+                            <label for="signUpPwdRepeat"><b>Repeat Password</b></label>
+                            <input type="password" name="signUpPwdRepeat" required>
+
+                            <span id="signUpMessage" style="color: red"></span>
+
+                            <button type="submit" class="signupBtn" value="signUpValue">Sign Up</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </script>
+        <!-- PROFILE VIEW 
+            (Empty for now) -->
+        <script id="profileview" type="text/view">
+            <!-- CONTAINER -->
+            <div class="main-container">
+                <div class ="lhs-container">
+                    LHS
+                </div>
+                <div class="rhs-container">
+                    RHS
+                </div>
+            </div>
+        </script>
+    </head>
+    <body>
+        <div id="view"></div>
+    </body>
+</html>
