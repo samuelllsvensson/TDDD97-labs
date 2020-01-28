@@ -85,15 +85,82 @@
                 <button class="tablink" onclick="openPage('Account')">Account</button>
                 
                 <div id="Home" class="tabcontent">
-                    <h3>Home</h3>
+                    <!-- 1. The signed-in user’s personal information provided at sign-up process except the password.
+                        2. A text area and a post button which the user can use to post messages to his/her own wall.
+                        3. A list of all posted messages forming a wall.
+                        4. A button to reload only the wall in order to see the newly posted messages by other users. -->
+                    
+                    <div id="home-container"> 
+                        <div id="personalInfo">
+                            <h5>Personal Info</h5>
+                            <label>Name: </label>
+                            <div id="LName"></div>
+
+                            <label>Family name: </label>
+                            <div id="LFamilyName"></div>
+
+                            <label>Gender: </label>
+                            <div id="LGender"></div>
+
+                            <label>City: </label>
+                            <div id="LCity"></div>
+
+                            <label>Country: </label>
+                            <div id="LCountry"></div>
+
+                            <label>Email: </label>
+                            <div id="LEmail"></div>
+                        </div>
+                        <div id="messageWall">
+                            <div id="postMessage">
+                                <h5>Post on your wall!</h4>
+                                <form name="postMessage" onsubmit="return postMessage(this)" method="post">
+                                    <textarea name="message" rows="5" cols="45"></textarea>
+                                    <button class="button" type="submit" value="postMessageValue">Post</button>
+                                </form>
+                            </div>
+                            <div id="reloadMessages">
+                                <form name="updateMessages" onsubmit="return updateMessages()">
+                                    <button class="button" type="submit" value="reloadMessagesValue">Reload messages</button>
+                                </form>
+                            </div>
+                            <div id="allMessages">
+                            
+                            </div>
+                            
+                        </div>
+                        
+                    </div>
                 </div>
                   
                 <div id="Browse" class="tabcontent">
-                    <h3>Browse</h3>
+                    <form name="searchUserForm" onsubmit="return searchUser(this)" method="post">
+                        <label for="searchEmail"><b>Email</b></label>
+                            <input type="email" name="searchEmail" required>
+                        <button class="button" type="submit" value="searchUserValue">Search</button>
+                    </form>
+                    <div id="searchedUserInfo"> 
+                        
+                    </div>
                 </div>
                 
                 <div id="Account" class="tabcontent">
-                    <h3>Account</h3>
+                    <p>Here you can change your password and sign out.</p>
+                    <div id="changePwd-container"> 
+                        <form id="changePwdForm" name="changePwd" onsubmit="return changePwd(this)">               
+
+                            <label for="oldLoginPwd"><b>Old password</b></label>
+                            <input type="password" name="oldLoginPwd" required>
+
+                            <label for="newLoginPwd"><b>New password</b></label>
+                            <input type="password" name="newLoginPwd" required>
+
+                            <span id="changePwdMessage" style="color: red"></span>
+
+                            <button class="button" type="submit" value="ChangePwd">Change password</button>
+                        </form>
+                    </div>
+                    <button class="button" type="submit" value="signOutValue" onclick="signOut()">Sign Out</button>
                 </div>
                   
             </div>
