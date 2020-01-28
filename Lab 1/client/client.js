@@ -1,5 +1,13 @@
 displayView = function(){
-    document.getElementById("view").innerHTML = document.getElementById("welcomeview").innerHTML;
+    // Check if user is already logged in (token already exists client-side)
+    if (localStorage.getItem("token") !== null) {
+        document.getElementById("view").innerHTML = document.getElementById("profileview").innerHTML;
+        // Get the element with id="defaultOpen" and click on it
+        document.getElementById("defaultOpen").click();
+        document.getElementById("defaultOpen").style.backgroundColor = "#333";
+    } else {
+        document.getElementById("view").innerHTML = document.getElementById("welcomeview").innerHTML;
+    }
 };
 
 window.onload = function() {
@@ -17,7 +25,6 @@ logInValidation = function(signInForm) {
 
     var server = serverstub.signIn(signInForm.logInEmail.value, signInForm.loginPwd.value);
     message.innerHTML = server.message;
-    console.log(server);
     if (server.success) {
         localStorage.token = server.data;
         document.getElementById("view").innerHTML = document.getElementById("profileview").innerHTML;
@@ -51,10 +58,10 @@ signUpValidation = function(formData) {
         };
     
         var message = document.getElementById("signUpMessage");
-        var serverMessage = serverstub.signUp(dataObject);
+        var server = serverstub.signUp(dataObject);
         // Display potential error message
-        message.innerHTML = serverMessage.message;
-        if (serverMessage.success) {
+        message.innerHTML = server.message;
+        if (server.success) {
             var result = serverstub.signUp(formData.signUpEmail.value, formData.signUpPwd.value);
             localStorage.token = result.data;
             document.getElementById("view").innerHTML = document.getElementById("profileview").innerHTML;
@@ -83,3 +90,19 @@ validateSignUpPassword = function(formData) {
     else
         return true; 
 };
+
+
+function openPage(pageName) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tablink");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].style.backgroundColor = "";
+    }
+    document.getElementById(pageName).style.display = "block";
+}
+  
+

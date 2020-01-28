@@ -25,8 +25,10 @@
                         
                             <label for="loginPwd"><b>Password</b></label>
                             <input type="password" name="loginPwd" required>
+
                             <span id="signInMessage" style="color: red"></span>
-                            <button type="submit" class="loginBtn" value="logInValue" style="float: right; margin: 5px;">Login</button>
+
+                            <button class="button" type="submit" value="logInValue" style="float: right; margin: 5px;">Login</button>
                         </form>
                     </div>
                     <!--                        SIGN UP                            -->
@@ -60,14 +62,14 @@
                             <input type="email" name="signUpEmail" required>
 
                             <label for="signUpPwd"><b>Password</b></label>
-                            <input type="password" name="signUpPwd" onkeyup="checkSignInPassword(this.value)" required>
+                            <input type="password" name="signUpPwd" onkeyup="checkSignUpPassword(this.value)" required>
                         
                             <label for="signUpPwdRepeat"><b>Repeat Password</b></label>
                             <input type="password" name="signUpPwdRepeat" required>
 
                             <span id="signUpMessage" style="color: red"></span>
 
-                            <button type="submit" class="signupBtn" value="signUpValue" style="float: right; margin: 5px;">Sign Up</button>
+                            <button class="button" type="submit" value="signUpValue" style="float: right; margin: 5px;">Sign Up</button>
                         </form>
                     </div>
                 </div>
@@ -78,12 +80,22 @@
         <script id="profileview" type="text/view">
             <!-- CONTAINER -->
             <div class="main-container">
-                <div class ="lhs-container">
-                    LHS
+                <button class="tablink" onclick="openPage('Home')" id="defaultOpen">Home</button>
+                <button class="tablink" onclick="openPage('Browse')">Browse</button>
+                <button class="tablink" onclick="openPage('Account')">Account</button>
+                
+                <div id="Home" class="tabcontent">
+                    <h3>Home</h3>
                 </div>
-                <div class="rhs-container">
-                    RHS
+                  
+                <div id="Browse" class="tabcontent">
+                    <h3>Browse</h3>
                 </div>
+                
+                <div id="Account" class="tabcontent">
+                    <h3>Account</h3>
+                </div>
+                  
             </div>
         </script>
     </head>
