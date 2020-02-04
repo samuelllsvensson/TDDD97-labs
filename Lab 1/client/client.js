@@ -272,10 +272,11 @@ function postBrowseMessage() {
 function updateBrowseMessages(email) {
     // First time user 
     var token = localStorage.getItem("token");
+    var userEmail = document.getElementById("searchedEmail").value; 
     if (email == null) {
         email = serverstub.getUserDataByToken(token).data.email;
     }
-    var messages = serverstub.getUserMessagesByEmail(token, email).data;
+    var messages = serverstub.getUserMessagesByEmail(token, userEmail).data;
     var container = document.getElementById("allBrowseMessages");
     var returnList = "";
     messages.forEach(function(item){
@@ -309,7 +310,7 @@ function changePwd(changePwdForm) {
     var oldPwd = changePwdForm.oldLoginPwd.value;
     var newPwd = changePwdForm.newLoginPwd.value;
     var newRepeatedPwd = changePwdForm.newRepeatedLoginPwd.value;
-    
+
     if(newPwd.length < 5) {
         message.innerHTML = "New password is too short";
         return false;
