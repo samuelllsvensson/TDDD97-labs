@@ -4,8 +4,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <title>TDDD97 Labs by Samuel</title>
         <link href="../css/client.css" type="text/css" rel="stylesheet">
-        <script src="./client.js"></script>
-        <script src="../serverstub.js"></script>
+      
         <!-- WELCOME VIEW  -->
         <script id="welcomeview" type="text/view">
             <!-- CONTAINER -->
@@ -17,7 +16,7 @@
                 <div class="rhs-container">
                     <!--                        LOGIN                             -->
                     <div class="login-container">
-                        <form name="logIn" onsubmit="return logInValidation(this)">               
+                        <form id="logIn" onsubmit="return logInValidation(this)">               
                             <!-- input type "email" will make sure proper email address is used
                                 :valid and :invalid CSS pseudo-classes are automatically applied  -->
                             <label for="logInEmail"><b>Email</b></label>
@@ -33,7 +32,7 @@
                     </div>
                     <!--                        SIGN UP                            -->
                     <div class="signup-container">
-                        <form name="signUp" onsubmit="return signUpValidation(this)" method="post">
+                        <form id="signUp" onsubmit="return signUpValidation(this)" method="post">
                             <h3 align="center">Sign up here</h3>
 
                             <label for="firstName"><b>First name</b></label>
@@ -44,10 +43,10 @@
 
                             <label for="gender"><b>Gender</b></label>
                             <select name="gender">
-                                <option value="0">Select gender:</option>
-                                <option value="1">Male</option>
-                                <option value="2">Female</option>
-                                <option value="3">Other</option>
+                                <option value="NotChosen">Select gender:</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
                                 </select>
 
                             <label for="city"><b>City</b></label>
@@ -62,12 +61,12 @@
                             <input type="email" name="signUpEmail" required>
 
                             <label for="signUpPwd"><b>Password</b></label>
-                            <input type="password" name="signUpPwd" onkeyup="checkSignUpPassword(this.value)" required>
+                            <input type="password" name="signUpPwd" id="pass1" onkeyup="checkPass();" required>
                         
                             <label for="signUpPwdRepeat"><b>Repeat Password</b></label>
-                            <input type="password" name="signUpPwdRepeat" required>
+                            <input type="password" name="signUpPwdRepeat" id="pass2" onkeyup="checkPass();" required>
 
-                            <span id="signUpMessage" style="color: red"></span>
+                            <span id="signUpMessage" style="margin: 5px;"></span>
 
                             <button class="button" type="submit" value="signUpValue" style="float: right; margin: 5px;">Sign Up</button>
                         </form>
@@ -75,8 +74,7 @@
                 </div>
             </div>
         </script>
-        <!-- PROFILE VIEW 
-            (Empty for now) -->
+        <!-- PROFILE VIEW  -->
         <script id="profileview" type="text/view">
             <!-- CONTAINER -->
             <div class="main-container">
@@ -112,57 +110,63 @@
                             <div id="LEmail"></div>
                         </div>
                         <div id="messageWall">
-                            <div id="postMessage">
+                            <div id="postMessage-container">
                                 <h5>Post on your wall!</h4>
-                                <form name="postMessage" onsubmit="return postMessage(this)" method="post">
-                                    <textarea name="message" rows="5" cols="45"></textarea>
-                                    <button class="button" type="submit" value="postMessageValue">Post</button>
+                                <form name="postMessageForm" onsubmit="postMessage()" method="post">
+                                    <textarea name="areaText" rows="5" cols="35" required></textarea>
+                                    <input type="submit" value="Post Message"></input>
                                 </form>
                             </div>
+                            <div id="allMessages"></div>
                             <div id="reloadMessages">
-                                <form name="updateMessages" onsubmit="return updateMessages()">
-                                    <button class="button" type="submit" value="reloadMessagesValue">Reload messages</button>
-                                </form>
-                            </div>
-                            <div id="allMessages">
-                            
-                            </div>
-                            
-                        </div>
-                        
+                                <button class="button" onclick="updateMessages()">Reload messages</button>
+                            </div>                    
+                        </div>                    
                     </div>
                 </div>
                 <!--            BROWSE              -->
                 <div id="Browse" class="tabcontent">
-                    <form name="searchUserForm" onsubmit="return searchUser(this)" method="post">
-                        <label for="searchEmail"><b>Email</b></label>
-                            <input type="email" name="searchEmail" required>
-                        <button class="button" type="submit" value="searchUserValue">Search</button>
-                    </form>
-                     
-                    <div id="otherUser-container"> 
-                        <div class="personalInfo">
-                            <h5>Other user's info:</h5>
-                            <label>Name: </label>
-                            <div id="LName"></div>
-
-                            <label>Family name: </label>
-                            <div id="LFamilyName"></div>
-
-                            <label>Gender: </label>
-                            <div id="LGender"></div>
-
-                            <label>City: </label>
-                            <div id="LCity"></div>
-
-                            <label>Country: </label>
-                            <div id="LCountry"></div>
-
-                            <label>Email: </label>
-                            <div id="LEmail"></div>
+                    <div id="browse-container"> 
+                        <div id="postMessage-container">
+                            <h5>Search user:</h5>
+                            <input id="searchedEmail" "type="email" required>
+                            <button class="button" onClick="searchUser()" style="width: 15%; float: left; margin: 0px 0px 0px 10px;">Search</button>
                         </div>
-                        <div id="otherUserPosts">
-                            otherUserPosts
+                        <span id="emailError"></span>
+                        <div id="otherUser-container"> 
+                            <div class="personalInfo" style="flex: 1;">
+                                <h5>Other user's info:</h5>
+                                <label>Name: </label>
+                                <div id="OName"></div>
+
+                                <label>Family name: </label>
+                                <div id="OFamilyName"></div>
+
+                                <label>Gender: </label>
+                                <div id="OGender"></div>
+
+                                <label>City: </label>
+                                <div id="OCity"></div>
+
+                                <label>Country: </label>
+                                <div id="OCountry"></div>
+
+                                <label>Email: </label>
+                                <div id="OEmail"></div>
+                            </div>
+                            <div id="messageWall">
+                                <div id="browse-post-message" class="messagewrapper">
+                                    <form name="postBrowseMessageForm" onsubmit="postBrowseMessage(); return false;" method="post">
+                                        <textarea id="areaBrowseText" rows="5" cols="35" required></textarea>
+                                        <input type="submit" value="Post" style="float: right;"></button>
+                                    </form>
+                                    
+                                </div>
+                                <div id="allBrowseMessages"></div>   
+                                <div>
+                                    <button onclick="updateBrowseMessages()">Reload post list</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -170,17 +174,19 @@
                 <div id="Account" class="tabcontent">
                     <p>Here you can change your password and sign out.</p>
                     <div id="changePwd-container"> 
-                        <form id="changePwdForm" name="changePwd" onsubmit="return changePwd(this)">               
+                        <form id="changePwdForm" method="post" onsubmit="changePwd(this); return false;">               
 
                             <label for="oldLoginPwd"><b>Old password</b></label>
                             <input type="password" name="oldLoginPwd" required>
 
                             <label for="newLoginPwd"><b>New password</b></label>
-                            <input type="password" name="newLoginPwd" required>
+                            <input type="password" name="newLoginPwd" id="pass1" onkeyup="checkPass();" required>
+
+                            <label for="newRepeatedLoginPwd"><b>Repeat password</b></label>
+                            <input type="password" name="newRepeatedLoginPwd" id="pass2" onkeyup="checkPass();" required>
 
                             <span id="changePwdMessage" style="color: red"></span>
-
-                            <button class="button" type="submit" value="ChangePwd">Change password</button>
+                            <input type="submit" value="Change password"></input>
                         </form>
                     </div>
                     <button class="button" type="submit" value="signOutValue" onclick="signOut()">Sign Out</button>
@@ -188,8 +194,23 @@
                   
             </div>
         </script>
+<!--         
+        <script type="text/javascript">
+
+            if(localStorage) { // Check if the localStorage object exists
+            
+                localStorage.clear()  //clears the localstorage
+            
+            } else {
+            
+                alert("Sorry, no local storage."); //an alert if localstorage is non-existing
+            }
+            
+            </script> -->
     </head>
     <body>
         <div id="view"></div>
+        <script src="./client.js"></script>
+        <script src="../serverstub.js"></script>
     </body>
 </html>

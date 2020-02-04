@@ -105,9 +105,26 @@ label {
     margin-left: 10px;
     margin-right: 10px;
 }
-
+#postMessage-container {
+    display: flex;
+    flex-direction: column;
+}
+#allMessages {
+    display: flex;
+    flex-direction: column;
+}
+.personalInfo {
+    width: 200px;
+}
 /* BROWSE VIEW */ 
-
+#browse-container {
+    display: flex;
+    flex-direction: column;
+}
+#otherUser-container {
+    display: flex;
+    flex-direction: row;
+}
 
 /* ACCOUNT VIEW */ 
 #changePwd-container {
