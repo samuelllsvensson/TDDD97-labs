@@ -1,0 +1,29 @@
+What security risks can storing passwords in plain text cause? How can this problem be addressed programmatically?
+It makes user credentials vulnerable to phishing attacks. 
+A way to combat this would be to hash passwords with MD5 hashing, but this is also vulnerable to rainbow table attacks. 
+If you add salt to the hash it becomes more unique. It is also possible to encrypt data using other algorithms like SHA-2.
+
+As http requests and responses are text-based information, they can be easily intercepted and read by a third-party on the Internet. Please explain how this problem has been solved in real-world scenarios. 
+To protect from Man in the middle attacks you can use HTTPS but that is not usually enough. 
+HTTP Strict Transport Security (HSTS) is a policy which further adds security. 
+You can add it by setting the HTTP header Strict-Transport-Security: max-age=31536000;
+
+How can we use Flask for implementing multi-page web applications? Please explain how Flask templates can help us on the way?
+If we would implement proper routing we can use Flask templates to switch between the HTML files which contain repetitive code (boilerplate). 
+That would enable us to use forward and back-buttons to store page history etc. 
+
+Please describe a Database Management System. How SQLiteis different from other DBMSs?
+SQLite is an open source project and is a self-contained, serverless database. 
+Sometimes it is referred to as an embedded database which means the DB engine runs as a part of the app. 
+SQLite assists datatypes such as Blob, Integer, Null, Text, Real (Not all data types). 
+SQLite is best for smaller databases and when you develop small standalone apps which don’t need much scalability.
+
+Do you think the Telnet client is a good tool for testing server-side procedures? What are its possible shortages? 
+User ID and password are transmitted without any encryption.
+It is not possible to run GUI based tools over Telnet connection as it is a character based communication tool. 
+It is not possible to transmit cursor movements and other GUI information. 
+It is very inefficient protocol. Each keystrokes require several context switches before it reaches the other end. 
+It is expensive due to slow typing speeds.
+
+
+
