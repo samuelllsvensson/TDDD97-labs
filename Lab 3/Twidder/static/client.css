@@ -1,0 +1,166 @@
+body {
+    background-color: cornflowerblue;
+}
+
+.main-container {
+    width: 600px;
+    height: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    margin: 0 auto;
+    margin-top: 100px;
+}
+
+/* WELCOME VIEW */
+.lhs-container {
+    width: 340px;
+    height: 400px;
+    float: left;
+    -webkit-box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.99);
+    -moz-box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.99);
+    box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.99);
+}
+
+.rhs-container {
+    width: 250px;
+    height: 400px;
+    float: left;
+    margin-left: 10px;
+
+}
+
+.login-container {
+    width: 250px;
+    height: 100px;
+    float: right;
+    position: relative;
+    padding: 10px 0px 0px 0px;
+    background-color: white;
+    border: 1px solid black;
+    -webkit-box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.99);
+    -moz-box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.99);
+    box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.99);
+}
+
+.signup-container {
+    width: 250px;
+    height: 280px;
+    float: right;
+    position: relative;
+    margin-top: 10px;
+    background-color: white;
+    border: 1px solid black;
+    -webkit-box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.99);
+    -moz-box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.99);
+    box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.99);
+}
+
+input {
+    width: 120px;
+    float: left;
+}
+
+select {
+    width: 124px;
+    height: 23px;
+    float: left;
+}
+
+label {
+    width: 90px;
+    float: left;
+    margin-left: 5px;
+}
+
+.button {
+    float: right;
+    width: 30%;
+    margin: 5px;
+}
+
+
+/* HOME/BROWSE/ACCOUNT VIEW */
+#Home {
+    background-color: white;
+}
+
+#Browse {
+    background-color: white;
+}
+
+#Account {
+    background-color: white;
+}
+
+/* Style tab links */
+.tablink {
+    background-color: #555;
+    color: white;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    font-size: 17px;
+    width: 33.33%;
+}
+
+.tablink:hover,
+.tablink:focus,
+.tablink:active {
+    background-color: #333;
+}
+
+.tabcontent {
+    display: none;
+    padding: 50px 20px;
+}
+
+/* HOME VIEW */
+#home-container {
+    display: flex;
+    flex-direction: row;
+
+}
+
+#messageWall {
+    flex: 1;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+#postMessage-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#allMessages {
+    display: flex;
+    flex-direction: column;
+}
+
+.personalInfo {
+    width: 200px;
+}
+
+/* BROWSE VIEW */
+#browse-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#otherUser-container {
+    display: flex;
+    flex-direction: row;
+}
+
+/* ACCOUNT VIEW */
+#changePwd-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#changePwdForm {
+    display: flex;
+    flex-direction: column;
+}
