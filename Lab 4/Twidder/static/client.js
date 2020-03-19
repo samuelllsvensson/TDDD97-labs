@@ -423,40 +423,149 @@ function changePwd() {
 
 /* ------------------      MISC / XML       ----------------------- */
 /**
- * Performs a POST XML HTTP request with given parameters and sets token to header
+ * Performs a POST XML HTTP request with given parameters and sets token to request header
  */
 XHttpPost = function(http, url, params, token) {
 	http.open('POST', url, true);
 	http.setRequestHeader('Content-Type', 'application/json');
-	http.setRequestHeader('token', token);
+	if (token) {
+		http.setRequestHeader('token', token);
+	}
 	http.send(params);
 };
 
 /* ------------------      MISC / CONNECT TO SOCKET       ----------------------- */
 /**
- * Opens and establishes a websocket connection 
+ * Opens and establishes a websocket connection, updates charts etc
  */
-
 function connectToSocket() {
 	var ws = new WebSocket('ws://' + document.domain + ':8080/websocket');
+	ws.onopen = function(event) {
+		var token = localStorage.getItem('token');
+		ws.send(token);
+	};
 	ws.onmessage = function(event) {
-		var message = event.data;
-		console.debug('WebSocket message received:', event);
-		if (message == 'sign_out') {
+		var message = JSON.parse(event.data);
+		console.debug('WebSocket message received:', message);
+		if (message.data === 'sign_out') {
 			localStorage.removeItem('token');
 			ws.close();
 			isLocal = false;
 			displayView();
 		}
+		if (message.dataMsg === 'posts') {
+			var canvas = document.getElementById('postsChart');
+			var ctx = canvas.getContext('2d');
+			var data = {
+				datasets: [
+					{
+						data: [ message.my_posts, message.total_posts - message.my_posts ],
+						backgroundColor: [ '#d843a9', '#f5b6cd' ]
+					}
+				],
+				labels: [ 'Twidposts on my wall', 'Others twidposts' ]
+			};
+			var config = {
+				type: 'doughnut',
+				data: data,
+				options: {
+					responsive: true,
+					legend: {
+						position: 'right',
+						labels: {
+							fontColor: 'black'
+						}
+					},
+					title: {
+						display: true,
+						text: 'Global Twidposts'
+					},
+					animation: {
+						animateScale: true,
+						animateRotate: true
+					}
+				}
+			};
+			window.myDoughnut = new Chart(ctx, config);
+		}
+
+		if (message.dataMsg === 'users') {
+			var canvas = document.getElementById('usersChart');
+			var ctx = canvas.getContext('2d');
+			var data = {
+				datasets: [
+					{
+						data: [ message.online_users, message.total_users - message.online_users ],
+						backgroundColor: [ '#57c56f', '#bbbbbb' ]
+					}
+				],
+				labels: [ 'Active twiddors', 'Offline twiddors' ]
+			};
+			var config = {
+				type: 'doughnut',
+				data: data,
+				options: {
+					responsive: true,
+					legend: {
+						position: 'right',
+						labels: {
+							fontColor: 'black'
+						}
+					},
+					title: {
+						display: true,
+						text: 'Global twiddors'
+					},
+					animation: {
+						animateScale: true,
+						animateRotate: true
+					}
+				}
+			};
+			window.myDoughnut = new Chart(ctx, config);
+		}
 	};
-	ws.onopen = function(event) {
-		var token = localStorage.getItem('token');
-		log('Socket open with token: ' + token);
-		ws.send(token);
+	ws.onclose = function(event) {
+		console.debug('WebSocket closed:', event);
 	};
 	isLocal = true;
 }
+/* ------------------      MISC / RESET PASSWORD     ----------------------- */
+/**
+ * Resets and sends email to server
+ */
+function resetPassword() {
+	var userEmail = document.getElementById('resetEmail').value;
+	var oldPwd = document.getElementsByName('oldResetLoginPwd')[0].value;
 
+	var mailOk = validateEmail(userEmail);
+	var errorMessage = document.getElementById('resetMessage');
+	if (mailOk) {
+		var http = new XMLHttpRequest();
+		http.onreadystatechange = function(ev) {
+			if (http.readyState == 4 && http.status == 200) {
+				var returnObject = JSON.parse(http.responseText);
+				if (returnObject.success) {
+					errorMessage.innerHTML = returnObject.message;
+				} else {
+					errorMessage.innerHTML = returnObject.message;
+				}
+			}
+		};
+		var url = '/reset_password';
+		var params = JSON.stringify({
+			email: userEmail,
+			oldPwd: oldPwd
+		});
+
+		XHttpPost(http, url, params);
+		return false;
+	} else {
+		errorMessage.innerText = 'Inputted email is not valid';
+		log('Inputted email is not valid');
+	}
+	return false;
+}
 /* ------------------      MISC / HELPER FUNCTIONS     ----------------------- */
 function validateEmail(email) {
 	var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -519,4 +628,10 @@ function checkPass() {
 		message.style.color = red;
 		message.innerHTML = 'Enter at least 6 digits!';
 	}
+}
+function goResetView() {
+	document.getElementById('view').innerHTML = document.getElementById('resetview').innerHTML;
+}
+function goWelcomeView() {
+	document.getElementById('view').innerHTML = document.getElementById('welcomeview').innerHTML;
 }

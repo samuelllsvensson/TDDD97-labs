@@ -6,7 +6,6 @@ from gevent import pywsgi
 from geventwebsocket import WebSocketError
 
 import logging
-
 import database_helper
 import re
 logging.basicConfig(level=logging.INFO)

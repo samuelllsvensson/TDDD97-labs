@@ -8,7 +8,6 @@
     <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
     <link href="static/client.css" type="text/css" rel="stylesheet">
     <!-- WELCOME VIEW  -->
-    <script src="static/client.js"></script>
     <script id="welcomeview" type="text/view">
         <!-- CONTAINER -->
         <div class="main-container">
@@ -28,7 +27,10 @@
 
                         <label for="loginPwd"><b>Password</b></label>
                         <input type="password" name="loginPwd" required>
-
+                        
+                        
+                        <span id="forgotPwdLink" onclick="return goResetView()">Forgot password?</span>
+                       
                         <span id="signInMessage" style="color: red"></span>
 
                         <button class="button" type="submit" value="logInValue"
@@ -127,96 +129,116 @@
                                         <input type="submit" value="Post Message"></input>
                                         <div id="message" style="color: green;"></div>
                                     </form>
-                                    
                                     <br>
                             </div>
                             <div id="allMessages"></div>
                             <div id="reloadMessages">
                                 <button class="button" onclick="return updateMessages();">Reload messages</button>
                             </div>
+                        </div>          
+                    </div>
+                </div>
+            </div>
+            <!--            BROWSE              -->
+            <div id="Browse" class="tabcontent">
+                <div id="browse-container">
+                    <div id="postMessage-container">
+                        <h5>Search user:</h5>
+                        <input id="searchedEmail" "type="email" required>
+                        <button class="button" onClick="return searchUser();"
+                            style="width: 15%; float: left; margin: 0px 0px 0px 10px;">Search</button>
+                        <div id="searchMessage"></div>
+                    </div>
+                    <span id="emailError"></span>
+                    <div id="otherUser-container">
+                        <div class="personalInfo" style="flex: 1;">
+                            <h5>Other user's info:</h5>
+                            <label>Name: </label>
+                            <div id="OName"></div>
+
+                            <label>Family name: </label>
+                            <div id="OFamilyName"></div>
+
+                            <label>Gender: </label>
+                            <div id="OGender"></div>
+
+                            <label>City: </label>
+                            <div id="OCity"></div>
+
+                            <label>Country: </label>
+                            <div id="OCountry"></div>
+
+                            <label>Email: </label>
+                            <div id="OEmail"></div>
+                        </div>
+                        <div id="messageWall">
+                            <div id="browsePostMessage">
+                                <form id="postBrowseMessageForm" onsubmit="return postBrowseMessage();">
+                                    <textarea name="areaBrowseText" rows="5" cols="35" required></textarea>
+                                    <input type="submit" value="Post" style="float: right;"></input>
+                                    <div id="message"></div>
+                                </form>
+                            </div>
+                            <div id="allBrowseMessages"></div>
+                            <div>
+                                <button onclick="return updateBrowseMessages();">Reload post list</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-                <!--            BROWSE              -->
-                <div id="Browse" class="tabcontent">
-                    <div id="browse-container">
-                        <div id="postMessage-container">
-                            <h5>Search user:</h5>
-                            <input id="searchedEmail" "type="email" required>
-                            <button class="button" onClick="return searchUser();"
-                                style="width: 15%; float: left; margin: 0px 0px 0px 10px;">Search</button>
-                            <div id="searchMessage"></div>
-                        </div>
-                        <span id="emailError"></span>
-                        <div id="otherUser-container">
-                            <div class="personalInfo" style="flex: 1;">
-                                <h5>Other user's info:</h5>
-                                <label>Name: </label>
-                                <div id="OName"></div>
+            <!--            ACCOUNT              -->
+            <div id="Account" class="tabcontent">
+                <p>Here you can change your password and sign out.</p>
+                <div id="changePwd-container">
+                    <form id="changePwdForm" onsubmit="return changePwd();">
 
-                                <label>Family name: </label>
-                                <div id="OFamilyName"></div>
+                        <label for="oldLoginPwd"><b>Old password</b></label>
+                        <input type="password" name="oldLoginPwd" autocomplete="on" required>
 
-                                <label>Gender: </label>
-                                <div id="OGender"></div>
+                        <label for="newLoginPwd"><b>New password</b></label>
+                        <input type="password" name="newLoginPwd" id="pass1" autocomplete="on" onkeyup="checkPass();" required>
 
-                                <label>City: </label>
-                                <div id="OCity"></div>
+                        <label for="newRepeatedLoginPwd"><b>Repeat password</b></label>
+                        <input type="password" name="newRepeatedLoginPwd" id="pass2" autocomplete="on" onkeyup="checkPass();"
+                            required>
 
-                                <label>Country: </label>
-                                <div id="OCountry"></div>
-
-                                <label>Email: </label>
-                                <div id="OEmail"></div>
-                            </div>
-                            <div id="messageWall">
-                                <div id="browsePostMessage">
-                                    <form id="postBrowseMessageForm" onsubmit="return postBrowseMessage();">
-                                        <textarea name="areaBrowseText" rows="5" cols="35" required></textarea>
-                                        <input type="submit" value="Post" style="float: right;"></input>
-                                        <div id="message"></div>
-                                    </form>
-                                </div>
-                                <div id="allBrowseMessages"></div>
-                                <div>
-                                    <button onclick="return updateBrowseMessages();">Reload post list</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                        <span id="changePwdMessage" style="color: red"></span>
+                        <input type="submit" value="Change password"></input>
+                    </form>
                 </div>
-                <!--            ACCOUNT              -->
-                <div id="Account" class="tabcontent">
-                    <p>Here you can change your password and sign out.</p>
-                    <div id="changePwd-container">
-                        <form id="changePwdForm" onsubmit="return changePwd();">
-
-                            <label for="oldLoginPwd"><b>Old password</b></label>
-                            <input type="password" name="oldLoginPwd" autocomplete="on" required>
-
-                            <label for="newLoginPwd"><b>New password</b></label>
-                            <input type="password" name="newLoginPwd" id="pass1" autocomplete="on" onkeyup="checkPass();" required>
-
-                            <label for="newRepeatedLoginPwd"><b>Repeat password</b></label>
-                            <input type="password" name="newRepeatedLoginPwd" id="pass2" autocomplete="on" onkeyup="checkPass();"
-                                required>
-
-                            <span id="changePwdMessage" style="color: red"></span>
-                            <input type="submit" value="Change password"></input>
-                        </form>
-                    </div>
-                    <button class="button" type="submit" value="signOutValue" onclick="signOut()">Sign Out</button>
-                </div>
-
+                <button class="button" type="submit" value="signOutValue" onclick="signOut()">Sign Out</button>
             </div>
+            <div id="chartsData-container">
+                <canvas id="usersChart"></canvas>
+                <canvas id="postsChart"></canvas>
+            </div>
+        </div>
     </script>
-</head>
+    <script id="resetview" type="text/view">
+        <div class="main-container">
+            <div id="ForgotPassword" style="display:block" >
+                <p>Please enter the email of the user you want to reset the password for. </br>
+                A newly generated password will be sent to your email. </p>
+                <form id="resetForm" onsubmit="return resetPassword()">
+                    <label for="resetEmail"><b>Email</b></label>
+                    <input type="email" id="resetEmail" required>
+                    <label for="oldResetLoginPwd"><b>Old password</b></label>
+                    <input type="password" name="oldResetLoginPwd" autocomplete="on" required>
 
+                    <button class="button" type="submit" value="resetValue">Reset password</button>
+                    <span id="resetMessage" style="color: green"></span>
+                </form>
+                <button id="returnToWelcomeBtn" class="button" onclick="return goWelcomeView()">Back</button>
+            </div>
+        </div>
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
+    <script src="static/utils.js"></script>
+    <script src="static/client.js"></script>
+</head>
 <body>
-    
     <div id="view"></div>
     
 </body>
-
 </html>

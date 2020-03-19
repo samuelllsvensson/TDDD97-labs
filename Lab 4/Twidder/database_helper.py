@@ -31,7 +31,7 @@ def generate_token():
 
 
 def insert_user(email, pwd, firstName, familyName, gender, city, country):
-    """Insert user 
+    """Insert user
     Takes user data and inserts values into the users table
 
         Keyword arguments:
@@ -48,16 +48,16 @@ def insert_user(email, pwd, firstName, familyName, gender, city, country):
             "INSERT INTO users VALUES(?,?,?,?,?,?,?)",
             [email, pwd, firstName, familyName, gender, city, country])
         get_db().commit()
-        #print("HELPER: Inserted user: ", email)
+        # print("HELPER: Inserted user: ", email)
         return True
     except:
-        #print("HELPER: Insertion failed!")
+        # print("HELPER: Insertion failed!")
         return False
 
 
 def login_user(email):
-    """Log in user 
-        Logs in user by inserting email and corresponding token into logged_in table 
+    """Log in user
+        Logs in user by inserting email and corresponding token into logged_in table
 
         Keyword arguments:
     email -- input email (string)
@@ -74,9 +74,9 @@ def login_user(email):
         return None
 
 
-def find_user(email, pwd):
-    """Find user 
-        Fetches from users table the searched user 
+def find_user_pwd(email, pwd):
+    """Find user
+        Fetches from users table the searched user
 
         Keyword arguments:
     email -- input email (string)
@@ -84,6 +84,23 @@ def find_user(email, pwd):
     """
     cursor = get_db().execute("SELECT * FROM users WHERE email=? AND pwd=?",
                               [email, pwd])
+    rows = cursor.fetchone()
+    cursor.close()
+    if (rows == None):
+        return False
+    else:
+        return True
+
+
+def find_user(email):
+    """Find user
+        Fetches from users table the searched user
+
+        Keyword arguments:
+    email -- input email (string)
+    """
+    cursor = get_db().execute("SELECT * FROM users WHERE email=?",
+                              [email])
     rows = cursor.fetchone()
     cursor.close()
     if (rows == None):
@@ -113,7 +130,7 @@ def validate_logged_in(token):
         Validates if user token corresponds to a logged in user in logged_in table
 
         Keyword arguments:
-    token -- user token (string)
+        token -- user token (string)
     """
     try:
         cursor = get_db().execute("SELECT email FROM logged_in WHERE token=?",
@@ -126,10 +143,17 @@ def validate_logged_in(token):
         return False
 
 
-def logged_in_users(token):
+def validate_user(token):
+    """Validate_user
+        Validates if user token corresponds to a logged in user in logged_in table
+        Same as above function except it returns a boolean
+
+        Keyword arguments:
+        token -- user token (string)
+    """
     db = get_db()
     cur = db.cursor()
-    cur.execute("SELECT email FROM logged_in WHERE token=?", (token,))
+    cur.execute("SELECT email FROM logged_in WHERE token=?", [token])
     logged_in = cur.fetchone()
     if logged_in == None:
         return False
@@ -186,7 +210,7 @@ def get_user_data_by_email(token, email):
 
 def post_message(token, to, message):
     """Post message
-        Posts message to user wall of text 
+        Posts message to user wall of text
 
         Keyword arguments:
         token -- user token (string)
@@ -198,7 +222,7 @@ def post_message(token, to, message):
         if (email == None):
             return False
         to = to.replace('"', '')
-        #print('HELPER: trying to post message to: ', to)
+        # print('HELPER: trying to post message to: ', to)
         cursor = get_db().execute(
             "SELECT * FROM users WHERE email=?", [to])
         user = cursor.fetchone()
@@ -231,7 +255,7 @@ def get_user_messages_by_token(token):
         messages = cursor.fetchall()
         cursor.close()
         if (len(messages) == 0):
-            #print('HELPER: length of messages is 0')
+            # print('HELPER: length of messages is 0')
             return False
         return messages
     except:
@@ -251,18 +275,18 @@ def get_user_messages_by_email(token, email):
         if (validation == None):
             print('HELPER: Getusermessagesemail validation is none')
             return False
-        #print('HELPER: email get from: ', email)
+        # print('HELPER: email get from: ', email)
         cursor = get_db().execute(
             "SELECT sender, message  FROM wall_of_text WHERE receiver=?", [email])
         messages = cursor.fetchall()
-        #print('HELPER: Getusermessagesemail messages: ', messages)
+        # print('HELPER: Getusermessagesemail messages: ', messages)
         cursor.close()
         if (len(messages) == 0):
-            #print('HELPER: Getusermessagesemail no user messages for email')
+            # print('HELPER: Getusermessagesemail no user messages for email')
             return False
         return messages
     except:
-        #print("HELPER: didn't succeed try in getusermessage HELPER")
+        # print("HELPER: didn't succeed try in getusermessage HELPER")
         return False
 
 
@@ -293,3 +317,63 @@ def change_password(token, oldPwd, newPwd):
             return False
     except:
         return False
+
+
+def reset_password(email, oldPwd, newPwd):
+    """Reset password
+        Resets password of user and updates it in users table
+
+        Keyword arguments:
+    token -- user token (string)
+        oldPwd -- old user password (string)
+        newPwd -- new user password (string)
+    """
+    print('HELPER: received email', email)
+    print('HELPER: received oldPwd', oldPwd)
+    print('HELPER: received newPwd', newPwd)
+    try:
+        
+        if (email == None):
+            return False
+        cursor = get_db().execute(
+            "SELECT pwd FROM users WHERE email=?", [email])
+        pwd = cursor.fetchone()
+        print('fetched ', pwd)
+        cursor.close()
+        if (pwd[0] == oldPwd and pwd[0] != None):
+            get_db().execute(
+                "UPDATE users SET pwd=? WHERE email=?", [newPwd, email])
+            get_db().commit()
+            print('changed user password')
+            return True
+        else:
+            return False
+    except:
+        return False
+
+
+# FOR CHARTS 
+def get_total_users():
+    cursor = get_db().execute("SELECT count(email) FROM users")
+    users = cursor.fetchone()
+    cursor.close()
+    return users[0]
+
+def get_total_messages():
+    cursor = get_db().execute("SELECT count(id) FROM wall_of_text")
+    messages = cursor.fetchone()
+    cursor.close()
+    return messages
+
+def get_total_user_messages(email):
+    cursor = get_db().execute("SELECT count(id) FROM wall_of_text WHERE receiver=?", [email])
+    messages = cursor.fetchone()
+    cursor.close()
+    return messages
+
+def get_email_from_token(token):
+    cursor = get_db().execute("SELECT email FROM logged_in WHERE token=?", [token])
+    email = cursor.fetchone()
+    cursor.close()
+    return email
+

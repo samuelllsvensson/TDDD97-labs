@@ -1,18 +1,22 @@
 from flask import app, Flask, request, jsonify
-import json
 from gevent.pywsgi import WSGIServer
 from geventwebsocket.handler import WebSocketHandler
 from gevent import pywsgi
 from geventwebsocket import WebSocketError
 
+import yagmail
+import keyring
 import logging
-
+import uuid
+import json
 import database_helper
 import re
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
 app.debug = True
+yagmail.register(EMAIL,PASSWPORD) #Replace with real credentials
 
+sockets = {}
 
 @app.teardown_request
 def after_request(exception):
@@ -63,7 +67,7 @@ def sign_in():
     data = request.get_json()
     email = data['email']
     pwd = data['pwd']
-    if not (database_helper.find_user(email, pwd)):
+    if not (database_helper.find_user_pwd(email, pwd)):
         res = jsonify({'success': False, 'message': 'Wrong email or password'})
         return res
     token = database_helper.login_user(email)
@@ -73,6 +77,8 @@ def sign_in():
             'message': 'Signed in!',
             'token': token
         })
+        push_websocket_active_users()
+        push_websocket_total_posts()
         return res
     else:
         res = jsonify({'success': False, 'message': 'Something went wrong!'})
@@ -124,8 +130,10 @@ def get_user_data_by_email():
             'country': result[5]
         })
     else:
-        res = jsonify(
-            {'success': False, 'message': 'There is no such user in database!'})
+        res = jsonify({
+            'success': False,
+            'message': 'There is no such user in database!'
+        })
 
     return res
 
@@ -146,12 +154,18 @@ def post_message():
     result = database_helper.post_message(token, receiver, message)
     if token is not None:
         if result == True:
-            res = jsonify(
-                {'success': True, 'message': 'Message posted', 'receiver': receiver})
+            push_websocket_total_posts()
+            res = jsonify({
+                'success': True,
+                'message': 'Message posted',
+                'receiver': receiver
+            })
             print("successfully posted message: ", message)
         else:
-            res = jsonify(
-                {'success': False, 'message': 'Posting message failed!'})
+            res = jsonify({
+                'success': False,
+                'message': 'Posting message failed!'
+            })
             print("result is false in post message")
 
     else:
@@ -166,15 +180,18 @@ def get_user_messages_by_token():
     result = database_helper.get_user_messages_by_token(token)
     if token is not None:
         if result is not None:
-            res = {'success': True,
-                   'message': "Successfully retrieved all messages",
-                   'data': result}
+            res = {
+                'success': True,
+                'message': "Successfully retrieved all messages",
+                'data': result
+            }
         else:
-            res = {'success': False,
-                   'message': "Could not retrieve messages"}
+            res = {'success': False, 'message': "Could not retrieve messages"}
     else:
-        res = {'success': False,
-               'message': "Invalid token, could not retrieve data"}
+        res = {
+            'success': False,
+            'message': "Invalid token, could not retrieve data"
+        }
 
     return json.dumps(res)
 
@@ -187,15 +204,18 @@ def get_user_messages_by_email():
     result = database_helper.get_user_messages_by_email(token, email)
     if token is not None:
         if result is not None:
-            res = {'success': True,
-                   'message': "Successfully retrieved all messages",
-                   'data': result}
+            res = {
+                'success': True,
+                'message': "Successfully retrieved all messages",
+                'data': result
+            }
         else:
-            res = {'success': False,
-                   'message': "Could not retrieve messages"}
+            res = {'success': False, 'message': "Could not retrieve messages"}
     else:
-        res = {'success': False,
-               'message': "Invalid token, could not retrieve data"}
+        res = {
+            'success': False,
+            'message': "Invalid token, could not retrieve data"
+        }
 
     return json.dumps(res)
 
@@ -206,8 +226,17 @@ def sign_out():
         Signs out currently logged in user
     """
     token = request.headers.get('token')
+    print('signing out token: ', token)
+    user = database_helper.get_email_from_token(token)
     result = database_helper.logout_user(token)
     if (result == True):
+        print('sockets before sign out ', sockets)
+        print('user[0] before sign out ', user[0])
+        print('sockets[user[0]] before sign out ', sockets[user[0]])
+        print('deleting: ', sockets[user[0]])
+        del sockets[user[0]]
+        push_websocket_active_users()
+
         res = jsonify({'success': True, 'message': 'Signed out!'})
         return res
     else:
@@ -228,52 +257,138 @@ def change_password():
     if (len(newPwd) < 5):
         res = jsonify({'success': False, 'message': 'Too short password'})
         return res
-    if(oldPwd != newPwd):
+    if (oldPwd != newPwd):
         result = database_helper.change_password(token, oldPwd, newPwd)
         print('result in changepassword', result)
         if (result == True):
             res = jsonify({'success': True, 'message': 'Password changed'})
             return res
         else:
-            res = jsonify(
-                {'success': False, 'message': 'Something went wrong!'})
+            res = jsonify({
+                'success': False,
+                'message': 'Something went wrong!'
+            })
             return res
     else:
-        res = jsonify(
-            {'success': False, 'message': 'Old and new password are the same'})
+        res = jsonify({
+            'success': False,
+            'message': 'Old and new password are the same'
+        })
         return res
     return jsonify({'success': False, 'message': 'end'})
 
 
-sockets = {}
+
 @app.route('/websocket')
 def websocket():
     if request.environ.get('wsgi.websocket'):
         ws = request.environ['wsgi.websocket']
         token = ws.receive()
         email = database_helper.validate_logged_in(token)
+        print('got email from validate_logged_in in websocket server.py', email)
         email = email[0]
-        # print(database_helper.logged_in_users(token))
-        if database_helper.logged_in_users(token):
+        # print(database_helper.validate_user(token))
+        if database_helper.validate_user(token):
             if email in sockets:
                 # oldsocket is the existing entry
                 oldSocket = sockets[email]
                 try:
-                    oldSocket.send('sign_out')
+                    message = {
+                        'data': 'sign_out'
+                    }
+                    oldSocket.send(json.dumps(message))
                 except WebSocketError as e:
-                    print('ERROR: ', e)
+                    print('ERROR (server.py websocket): ', e)
                 del sockets[email]
             sockets[email] = ws
+            push_websocket_active_users()
+            push_websocket_total_posts()
+
             while True:
                 try:
                     ws.receive()
                 except WebSocketError as e:
-                    print('ERROR', e)
+                    print('ERROR (server.py websocket)', e)
                     return ''
     return ''
 
-    # returns something to prevent flask from crashing
 
+def make_key():
+    return uuid.uuid4()
+
+
+@app.route('/reset_password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    resetEmail = data['email']
+    oldPwd = data['oldPwd']
+    key = make_key()
+    #print(str(key))
+    #print(resetEmail)
+    email = database_helper.find_user(resetEmail)
+    if (email):
+        #print('email is', email)
+        try:
+            result = database_helper.reset_password(resetEmail, oldPwd, str(key))
+            print('result is: ', result)
+            if (result):
+                print('result is: ', result, '... Trying to send email')
+                print('trying to register connection...')
+                
+                print('trying to set up SMTP connection...')
+                yag = yagmail.SMTP(user=resetEmail)
+                print('setting contents...')
+                contents = [
+                    "You've requested to reset your Twidder password.",
+                    'Your new password is: ', str(key)
+                ]
+                print(contents)
+                print('creating recipients')
+                recipients = {
+                    resetEmail: 'Twidder user'
+                }
+                print(recipients)
+                print('trying to send email...')
+                yag.send(to=recipients,
+                            subject='Your temporary Twidder password',
+                            contents=contents)
+                print("Email sent successfully")
+                res = jsonify({'message': 'Email sent successfully'})
+                return res
+        except:
+            print("Error, email was not sent")
+
+    return ''
+
+def push_websocket_active_users():
+    total_users = database_helper.get_total_users()
+    print('----------push_websocket_active_users------------')
+    print('total users: ' , total_users)
+    message = {
+        'dataMsg': 'users',
+        'online_users' : len(sockets),
+        'total_users' : total_users
+    }
+    print('broadcasting message: ', message)
+    for users in sockets.keys():
+        #print('users', users)
+        sockets[users].send(json.dumps(message))
+
+def push_websocket_total_posts():
+    total_posts = database_helper.get_total_messages()
+    print('----------push_websocket_total_posts------------')
+    print('total_posts: ' , total_posts[0])
+    print(sockets)
+    for email in sockets.keys():
+        print('email', email)
+        my_posts = database_helper.get_total_user_messages(email)
+        message = {
+        'dataMsg': 'posts',
+        'my_posts' :  my_posts[0],
+        'total_posts' : total_posts[0]
+        }
+        print('sending message: ', message, ' to: ',sockets[email])
+        sockets[email].send(json.dumps(message))
 
 def validation(email, pwd, firstName, familyName, gender, city, country):
     """Validation function
@@ -311,10 +426,8 @@ def validation(email, pwd, firstName, familyName, gender, city, country):
         return False
     return True
 
-
 if __name__ == "__main__":
-    # app.run()
     print("starting server http://127.0.0.1:8080")
-    server = WSGIServer(('127.0.0.1', 8080), app,
+    server = WSGIServer(('127.0.0.1', 8080), app, 
                         handler_class=WebSocketHandler)
     server.serve_forever()
