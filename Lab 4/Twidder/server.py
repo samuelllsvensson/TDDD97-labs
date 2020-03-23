@@ -105,12 +105,12 @@ def get_user_data_by_token():
     data = request.get_json()
 
     email = data['email']
-    payload = data['payload']
+    url = '/get_user_data_by_token'
     token = database_helper.get_token_from_email(email)
-    server_hash = sha256((token[0]+payload).encode('utf-8')).hexdigest()
+    server_hash = sha256((token[0]+email+url).encode('utf-8')).hexdigest()
     
     userData = database_helper.get_user_data_by_token(token[0])
-    #print('GETUSERDATABYTOKEN: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
+    print('GETUSERDATABYTOKEN: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
     if userData != None and server_hash == hashed_token:
         res = jsonify({
             'success': True,
@@ -135,16 +135,18 @@ def get_user_data_by_email():
         email -- input email (string), default = None
     """
     data = request.get_json()
+    print(data)
+    searchedEmail = data['searchedEmail']
     email = data['email']
-    payload = data['payload']
-    user_exists = database_helper.find_user(email)
+    url = '/get_user_data_by_email'
+    user_exists = database_helper.find_user(searchedEmail)
     if(user_exists):
         token = database_helper.get_token_from_email(email)
-        #print('GETUSERDATABYTOKEN: token', token[0])
+        print('GETUSERDATABYTOKEN: token', token[0])
         hashed_token = request.headers.get('token')
-        server_hash = sha256((token[0]+payload).encode('utf-8')).hexdigest()
-        #print('GETUSERDATABYEMAIL: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
-        result = database_helper.get_user_data_by_email(token[0], email)
+        server_hash = sha256((token[0]+email+searchedEmail+url).encode('utf-8')).hexdigest()
+        print('GETUSERDATABYEMAIL: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
+        result = database_helper.get_user_data_by_email(token[0], searchedEmail)
         if result != None and token[0] and server_hash == hashed_token:
             res = jsonify({
                 'success': True,
@@ -158,7 +160,7 @@ def get_user_data_by_email():
         else:
             res = jsonify({
                 'success': False,
-                'message': 'There is no such user in database2!'
+                'message': 'There is no such user in database!'
             })
     return res
     
@@ -205,11 +207,11 @@ def get_user_messages_by_token():
     data = request.get_json()
     hashed_token = request.headers.get('token')
     email = data['email']
-    payload = data['payload']
+    url = '/get_user_messages_by_token'
     token = database_helper.get_token_from_email(email)
-    server_hash = sha256((token[0]+payload).encode('utf-8')).hexdigest()
-    #print('GETUSERMSGSBYTOKEN: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
-
+    server_hash = sha256((token[0]+email+url).encode('utf-8')).hexdigest()
+    
+    print('GETUSERMSGSBYTOKEN: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
     result = database_helper.get_user_messages_by_token(token[0])
     if token[0] is not None:
         if result is not None and server_hash == hashed_token:
@@ -233,10 +235,11 @@ def get_user_messages_by_token():
 def get_user_messages_by_email():
     data = request.get_json()
     hashed_token = request.headers.get('token')
+    searchedEmail = data['searchedEmail']
     email = data['email']
-    payload = data['payload']
+    url = '/get_user_messages_by_email'
     token = database_helper.get_token_from_email(email)
-    server_hash = sha256((token[0]+payload).encode('utf-8')).hexdigest()
+    server_hash = sha256((token[0]+email+searchedEmail+url).encode('utf-8')).hexdigest()
     result = database_helper.get_user_messages_by_email(token[0], email)
 
     if token[0] is not None:
@@ -267,9 +270,10 @@ def sign_out():
     data = request.get_json()
     email = data['email']
     token = database_helper.get_token_from_email(email)
+    url = '/sign_out'
 
-    server_hash = sha256((token[0]+email).encode('utf-8')).hexdigest()
-    #print('SIGNOUT: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
+    server_hash = sha256((token[0]+email+url).encode('utf-8')).hexdigest()
+    print('SIGNOUT: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
     print('signing out token: ', token[0])
     user = database_helper.get_email_from_token(token[0])
     result = database_helper.logout_user(token[0])
@@ -286,7 +290,6 @@ def sign_out():
     else:
         res = jsonify({'success': False, 'message': 'Something went wrong!'})
         return res
-    #return ''
 
 def make_key():
     return uuid.uuid4()
@@ -301,6 +304,7 @@ def change_password():
     oldPwd = data['oldPwd']
     newPwd = data['newPwd']
     email = data['email']
+    url = '/change_password'
     token = database_helper.get_token_from_email(email)
 
     hashed_old_password = bcrypt.generate_password_hash(oldPwd).decode('utf-8')
@@ -311,7 +315,7 @@ def change_password():
     #print('hashed_new_password: ', hashed_new_password)
     #print('correct_password: ', correct_password)
 
-    server_hash = sha256((token[0]+oldPwd+newPwd+email).encode('utf-8')).hexdigest()
+    server_hash = sha256((token[0]+email+url+oldPwd+newPwd).encode('utf-8')).hexdigest()
     #print('CHANGEPWD: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
 
     if (len(newPwd) < 5):
@@ -345,19 +349,19 @@ def reset_password():
     data = request.get_json()
     resetEmail = data['email']
     oldPwd = data['oldPwd']
+    url = '/reset_password'
     key = make_key()
     token = database_helper.get_token_from_email(resetEmail)
 
     hashed_old_password = bcrypt.generate_password_hash(oldPwd).decode('utf-8')
     hashed_password = database_helper.get_hashed_password(resetEmail)
-    #print('hashed_password for this email is: ', hashed_password)
+    print('hashed_password for this email is: ', hashed_password)
     correct_password = bcrypt.check_password_hash(hashed_password, oldPwd)
     hashed_new_password = bcrypt.generate_password_hash(str(key)).decode('utf-8')
-    #print('correct_password: ', correct_password)
+    print('correct_password: ', correct_password)
 
-    server_hash = sha256((token[0]+oldPwd+resetEmail).encode('utf-8')).hexdigest()
-    #print('RESETPASSWORD: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
-
+    server_hash = sha256((token[0]+resetEmail+url+oldPwd).encode('utf-8')).hexdigest()
+    print('RESETPASSWORD: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
     email = database_helper.find_user(resetEmail)
     if (email) and correct_password and server_hash == hashed_token:
         try:

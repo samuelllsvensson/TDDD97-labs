@@ -141,13 +141,11 @@ signUpValidation = function(signUpForm) {
  */
 function displayHome() {
 	var http = new XMLHttpRequest();
-	var payload;
 	http.onreadystatechange = function(ev) {
 		if (http.readyState == 4 && http.status == 200) {
 			document.getElementById('view').innerHTML = document.getElementById('profileview').innerHTML;
 			var returnObject = JSON.parse(http.responseText);
 			var userData = returnObject;
-			payload = userData;
 			document.getElementById('LName').innerHTML = userData.firstName;
 			document.getElementById('LFamilyName').innerHTML = userData.familyName;
 			document.getElementById('LGender').innerHTML = userData.gender;
@@ -159,11 +157,10 @@ function displayHome() {
 	};
 	var email = localStorage.getItem('email');
 	var token = localStorage.getItem('token');
-	var hashed_token = sha256(token + payload);
 	var url = '/get_user_data_by_token';
+	var hashed_token = sha256(token + email + url);
 	var params = JSON.stringify({
-		email: email,
-		payload: payload
+		email: email
 	});
 	XHttpPost(http, url, params, hashed_token);
 }
@@ -204,7 +201,6 @@ function postMessage() {
  */
 function updateMessages() {
 	var container = document.getElementById('allMessages');
-	var payload;
 	var http = new XMLHttpRequest();
 	var empty = 'No messages yet!';
 	http.onreadystatechange = function(ev) {
@@ -220,7 +216,6 @@ function updateMessages() {
 				} else if (messageData.length == 0) {
 					container.innerHTML = empty;
 				}
-				payload = returnList;
 				container.innerHTML = returnList;
 			} else {
 				container.innerHTML = returnObject.message;
@@ -229,12 +224,11 @@ function updateMessages() {
 	};
 	var email = localStorage.getItem('email');
 	var token = localStorage.getItem('token');
-	var hashed_token = sha256(token + payload);
-
 	var url = '/get_user_messages_by_token';
+	var hashed_token = sha256(token + email + url);
+
 	var params = JSON.stringify({
-		email: email,
-		payload: payload
+		email: email
 	});
 	XHttpPost(http, url, params, hashed_token);
 }
@@ -244,9 +238,8 @@ function updateMessages() {
  * Displays searched user personal info
  */
 function searchUser() {
-	var email = document.getElementById('searchedEmail').value;
-	var mailOk = validateEmail(email);
-	var payload;
+	var searchedEmail = document.getElementById('searchedEmail').value;
+	var mailOk = validateEmail(searchedEmail);
 	var errorMessage = document.getElementById('emailError');
 	if (mailOk) {
 		var http = new XMLHttpRequest();
@@ -254,10 +247,9 @@ function searchUser() {
 			if (http.readyState == 4 && http.status == 200) {
 				var returnObject = JSON.parse(http.responseText);
 				if (returnObject.success) {
-					localStorage.setItem('search', email);
+					localStorage.setItem('search', searchedEmail);
 					if (localStorage.getItem('search') != null) {
 						var userData = returnObject;
-						payload = userData;
 						document.getElementById('OName').innerHTML = userData.firstName;
 						document.getElementById('OFamilyName').innerHTML = userData.familyName;
 						document.getElementById('OGender').innerHTML = userData.gender;
@@ -273,13 +265,14 @@ function searchUser() {
 				}
 			}
 		};
+		var email = localStorage.getItem('email');
 		var token = localStorage.getItem('token');
-		var hashed_token = sha256(token + payload);
-
 		var url = '/get_user_data_by_email';
+		var hashed_token = sha256(token + email + searchedEmail + url);
+
 		var params = JSON.stringify({
-			email: email,
-			payload: payload
+			searchedEmail: searchedEmail,
+			email: email
 		});
 		XHttpPost(http, url, params, hashed_token);
 		return false;
@@ -296,8 +289,7 @@ function searchUser() {
  */
 function updateBrowseMessages() {
 	var container = document.getElementById('allBrowseMessages');
-	var email = document.getElementById('searchedEmail').value;
-	var payload;
+	var searchedEmail = document.getElementById('searchedEmail').value;
 	var http = new XMLHttpRequest();
 	var empty = 'No messages yet!';
 	http.onreadystatechange = function(ev) {
@@ -313,20 +305,20 @@ function updateBrowseMessages() {
 				} else {
 					container.innerHTML = empty;
 				}
-				payload = returnList;
 				container.innerHTML = returnList;
 			} else {
 				container.innerHTML = returnObject.message;
 			}
 		}
 	};
+	var email = localStorage.getItem('email');
 	var token = localStorage.getItem('token');
-	var hashed_token = sha256(token + payload);
-
 	var url = '/get_user_messages_by_email';
+	var hashed_token = sha256(token + email + searchedEmail + url);
+
 	var params = JSON.stringify({
-		email: email,
-		payload: payload
+		searchedEmail: searchedEmail,
+		email: email
 	});
 	XHttpPost(http, url, params, hashed_token);
 }
@@ -387,12 +379,13 @@ function signOut() {
 	};
 	var email = localStorage.getItem('email');
 	var token = localStorage.getItem('token');
-	var hashed_token = sha256(token + email);
+	var url = '/sign_out';
+	var hashed_token = sha256(token + email + url);
 
 	var params = JSON.stringify({
 		email: email
 	});
-	XHttpPost(http, '/sign_out', params, hashed_token);
+	XHttpPost(http, url, params, hashed_token);
 	return false;
 }
 
@@ -437,13 +430,14 @@ function changePwd() {
 	};
 	var token = localStorage.getItem('token');
 	var email = localStorage.getItem('email');
-	var hashed_token = sha256(token + oldPwd + newPwd + email);
+	var url = '/change_password';
+	var hashed_token = sha256(token + email + url + oldPwd + newPwd);
 	var params = JSON.stringify({
 		oldPwd: oldPwd,
 		newPwd: newPwd,
 		email: email
 	});
-	XHttpPost(http, '/change_password', params, hashed_token);
+	XHttpPost(http, url, params, hashed_token);
 	return false;
 }
 /* ------------------      MISC / RESET PASSWORD     ----------------------- */
@@ -469,9 +463,9 @@ function resetPassword() {
 			}
 		};
 		var token = localStorage.getItem('token');
-		var hashed_token = sha256(token + oldPwd + email);
-
 		var url = '/reset_password';
+		var hashed_token = sha256(token + email + url + oldPwd);
+
 		var params = JSON.stringify({
 			email: email,
 			oldPwd: oldPwd
@@ -512,7 +506,7 @@ function connectToSocket() {
 	};
 	ws.onmessage = function(event) {
 		var message = JSON.parse(event.data);
-		console.debug('WebSocket message received:', message);
+		//console.debug('WebSocket message received:', message);
 		if (message.data === 'sign_out') {
 			localStorage.removeItem('token');
 			ws.close();
