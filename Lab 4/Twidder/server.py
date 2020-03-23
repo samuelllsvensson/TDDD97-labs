@@ -11,10 +11,16 @@ import uuid
 import json
 import database_helper
 import re
+
+import hashlib
+from hashlib import sha256
+from flask_bcrypt import Bcrypt
+
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 app.debug = True
-yagmail.register(EMAIL,PASSWPORD) #Replace with real credentials
+yagmail.register(EMAIL,PWD) #Replace with real credentials
 
 sockets = {}
 
@@ -36,6 +42,7 @@ def sign_up():
     """
     data = request.get_json()
     logging.info(data)
+
     email = data['email']
     pwd = data['pwd']
     firstName = data['firstName']
@@ -43,9 +50,10 @@ def sign_up():
     gender = data['gender']
     city = data['city']
     country = data['country']
-
+    hashed_password = bcrypt.generate_password_hash(pwd).decode('utf-8')
     if (validation(email, pwd, firstName, familyName, gender, city, country)):
-        result = database_helper.insert_user(email, pwd, firstName, familyName,
+        print('inserted user to database with hashed_password: ', hashed_password)
+        result = database_helper.insert_user(email, hashed_password, firstName, familyName,
                                              gender, city, country)
     else:
         res = jsonify({'success': False, 'message': 'Validation failed!'})
@@ -67,11 +75,14 @@ def sign_in():
     data = request.get_json()
     email = data['email']
     pwd = data['pwd']
-    if not (database_helper.find_user_pwd(email, pwd)):
+    hashed_password = database_helper.get_hashed_password(email)
+    #print('hashed password from helper: ', hashed_password)
+    correct_password = bcrypt.check_password_hash(hashed_password, pwd)
+    if not (database_helper.find_user_pwd(email, hashed_password)):
         res = jsonify({'success': False, 'message': 'Wrong email or password'})
         return res
     token = database_helper.login_user(email)
-    if (token):
+    if (token and correct_password):
         res = jsonify({
             'success': True,
             'message': 'Signed in!',
@@ -90,9 +101,17 @@ def get_user_data_by_token():
     """Get user data by token
         Given a token, returns corresponding user data
     """
-    token = request.headers.get('token')
-    userData = database_helper.get_user_data_by_token(token)
-    if userData != None:
+    hashed_token = request.headers.get('token')
+    data = request.get_json()
+
+    email = data['email']
+    payload = data['payload']
+    token = database_helper.get_token_from_email(email)
+    server_hash = sha256((token[0]+payload).encode('utf-8')).hexdigest()
+    
+    userData = database_helper.get_user_data_by_token(token[0])
+    #print('GETUSERDATABYTOKEN: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
+    if userData != None and server_hash == hashed_token:
         res = jsonify({
             'success': True,
             'email': userData[0],
@@ -113,30 +132,36 @@ def get_user_data_by_email():
         Given an email, returns corresponding user data
 
         Keyword arguments:
-    email -- input email (string), default = None
+        email -- input email (string), default = None
     """
     data = request.get_json()
     email = data['email']
-    token = request.headers.get('token')
-    result = database_helper.get_user_data_by_email(token, email)
-    if result != None:
-        res = jsonify({
-            'success': True,
-            'email': result[0],
-            'firstName': result[1],
-            'familyName': result[2],
-            'gender': result[3],
-            'city': result[4],
-            'country': result[5]
-        })
-    else:
-        res = jsonify({
-            'success': False,
-            'message': 'There is no such user in database!'
-        })
-
+    payload = data['payload']
+    user_exists = database_helper.find_user(email)
+    if(user_exists):
+        token = database_helper.get_token_from_email(email)
+        #print('GETUSERDATABYTOKEN: token', token[0])
+        hashed_token = request.headers.get('token')
+        server_hash = sha256((token[0]+payload).encode('utf-8')).hexdigest()
+        #print('GETUSERDATABYEMAIL: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
+        result = database_helper.get_user_data_by_email(token[0], email)
+        if result != None and token[0] and server_hash == hashed_token:
+            res = jsonify({
+                'success': True,
+                'email': result[0],
+                'firstName': result[1],
+                'familyName': result[2],
+                'gender': result[3],
+                'city': result[4],
+                'country': result[5]
+            })
+        else:
+            res = jsonify({
+                'success': False,
+                'message': 'There is no such user in database2!'
+            })
     return res
-
+    
 
 @app.route('/post_message', methods=['POST'])
 def post_message():
@@ -160,7 +185,7 @@ def post_message():
                 'message': 'Message posted',
                 'receiver': receiver
             })
-            print("successfully posted message: ", message)
+            print("successfully posted message: ", message, 'to receiver: ', receiver)
         else:
             res = jsonify({
                 'success': False,
@@ -176,10 +201,18 @@ def post_message():
 
 @app.route('/get_user_messages_by_token', methods=['POST'])
 def get_user_messages_by_token():
-    token = request.headers.get('token')
-    result = database_helper.get_user_messages_by_token(token)
-    if token is not None:
-        if result is not None:
+
+    data = request.get_json()
+    hashed_token = request.headers.get('token')
+    email = data['email']
+    payload = data['payload']
+    token = database_helper.get_token_from_email(email)
+    server_hash = sha256((token[0]+payload).encode('utf-8')).hexdigest()
+    #print('GETUSERMSGSBYTOKEN: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
+
+    result = database_helper.get_user_messages_by_token(token[0])
+    if token[0] is not None:
+        if result is not None and server_hash == hashed_token:
             res = {
                 'success': True,
                 'message': "Successfully retrieved all messages",
@@ -199,11 +232,15 @@ def get_user_messages_by_token():
 @app.route('/get_user_messages_by_email', methods=['POST'])
 def get_user_messages_by_email():
     data = request.get_json()
-    token = request.headers.get('token')
+    hashed_token = request.headers.get('token')
     email = data['email']
-    result = database_helper.get_user_messages_by_email(token, email)
-    if token is not None:
-        if result is not None:
+    payload = data['payload']
+    token = database_helper.get_token_from_email(email)
+    server_hash = sha256((token[0]+payload).encode('utf-8')).hexdigest()
+    result = database_helper.get_user_messages_by_email(token[0], email)
+
+    if token[0] is not None:
+        if result is not None and server_hash == hashed_token:
             res = {
                 'success': True,
                 'message': "Successfully retrieved all messages",
@@ -225,11 +262,18 @@ def sign_out():
     """Sign out
         Signs out currently logged in user
     """
-    token = request.headers.get('token')
-    print('signing out token: ', token)
-    user = database_helper.get_email_from_token(token)
-    result = database_helper.logout_user(token)
-    if (result == True):
+    hashed_token = request.headers.get('token')
+    
+    data = request.get_json()
+    email = data['email']
+    token = database_helper.get_token_from_email(email)
+
+    server_hash = sha256((token[0]+email).encode('utf-8')).hexdigest()
+    #print('SIGNOUT: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
+    print('signing out token: ', token[0])
+    user = database_helper.get_email_from_token(token[0])
+    result = database_helper.logout_user(token[0])
+    if (result == True) and server_hash == hashed_token:
         print('sockets before sign out ', sockets)
         print('user[0] before sign out ', user[0])
         print('sockets[user[0]] before sign out ', sockets[user[0]])
@@ -242,7 +286,10 @@ def sign_out():
     else:
         res = jsonify({'success': False, 'message': 'Something went wrong!'})
         return res
+    #return ''
 
+def make_key():
+    return uuid.uuid4()
 
 @app.route('/change_password', methods=['POST'])
 def change_password():
@@ -250,18 +297,33 @@ def change_password():
         Changes password of currently logged in user given old and new password
     """
     data = request.get_json()
-    token = request.headers.get('token')
+    hashed_token = request.headers.get('token')
     oldPwd = data['oldPwd']
     newPwd = data['newPwd']
+    email = data['email']
+    token = database_helper.get_token_from_email(email)
+
+    hashed_old_password = bcrypt.generate_password_hash(oldPwd).decode('utf-8')
+    hashed_password = database_helper.get_hashed_password(email)
+    #print('hashed_password for this email is: ', hashed_password)
+    correct_password = bcrypt.check_password_hash(hashed_password, oldPwd)
+    hashed_new_password = bcrypt.generate_password_hash(newPwd).decode('utf-8')
+    #print('hashed_new_password: ', hashed_new_password)
+    #print('correct_password: ', correct_password)
+
+    server_hash = sha256((token[0]+oldPwd+newPwd+email).encode('utf-8')).hexdigest()
+    #print('CHANGEPWD: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
 
     if (len(newPwd) < 5):
         res = jsonify({'success': False, 'message': 'Too short password'})
         return res
-    if (oldPwd != newPwd):
-        result = database_helper.change_password(token, oldPwd, newPwd)
+    if (oldPwd != newPwd) and correct_password and server_hash == hashed_token:
+        result = database_helper.change_password(token[0], str(hashed_password), str(hashed_new_password))
+        
         print('result in changepassword', result)
         if (result == True):
             res = jsonify({'success': True, 'message': 'Password changed'})
+            print('changed user password from: ',str(hashed_password), ' to: ',  str(hashed_new_password) )
             return res
         else:
             res = jsonify({
@@ -278,63 +340,32 @@ def change_password():
     return jsonify({'success': False, 'message': 'end'})
 
 
-
-@app.route('/websocket')
-def websocket():
-    if request.environ.get('wsgi.websocket'):
-        ws = request.environ['wsgi.websocket']
-        token = ws.receive()
-        email = database_helper.validate_logged_in(token)
-        print('got email from validate_logged_in in websocket server.py', email)
-        email = email[0]
-        # print(database_helper.validate_user(token))
-        if database_helper.validate_user(token):
-            if email in sockets:
-                # oldsocket is the existing entry
-                oldSocket = sockets[email]
-                try:
-                    message = {
-                        'data': 'sign_out'
-                    }
-                    oldSocket.send(json.dumps(message))
-                except WebSocketError as e:
-                    print('ERROR (server.py websocket): ', e)
-                del sockets[email]
-            sockets[email] = ws
-            push_websocket_active_users()
-            push_websocket_total_posts()
-
-            while True:
-                try:
-                    ws.receive()
-                except WebSocketError as e:
-                    print('ERROR (server.py websocket)', e)
-                    return ''
-    return ''
-
-
-def make_key():
-    return uuid.uuid4()
-
-
 @app.route('/reset_password', methods=['POST'])
 def reset_password():
     data = request.get_json()
     resetEmail = data['email']
     oldPwd = data['oldPwd']
     key = make_key()
-    #print(str(key))
-    #print(resetEmail)
+    token = database_helper.get_token_from_email(resetEmail)
+
+    hashed_old_password = bcrypt.generate_password_hash(oldPwd).decode('utf-8')
+    hashed_password = database_helper.get_hashed_password(resetEmail)
+    #print('hashed_password for this email is: ', hashed_password)
+    correct_password = bcrypt.check_password_hash(hashed_password, oldPwd)
+    hashed_new_password = bcrypt.generate_password_hash(str(key)).decode('utf-8')
+    #print('correct_password: ', correct_password)
+
+    server_hash = sha256((token[0]+oldPwd+resetEmail).encode('utf-8')).hexdigest()
+    #print('RESETPASSWORD: server_hash is:', server_hash, ' and hashed_token is: ', hashed_token)
+
     email = database_helper.find_user(resetEmail)
-    if (email):
-        #print('email is', email)
+    if (email) and correct_password and server_hash == hashed_token:
         try:
-            result = database_helper.reset_password(resetEmail, oldPwd, str(key))
+            #print('success! hashed_new_password: ', str(hashed_new_password) )
+            result = database_helper.reset_password(resetEmail, str(hashed_password), str(hashed_new_password))
+            #print('reset user password from: ',str(hashed_password), ' to: ',  str(hashed_new_password) )
             print('result is: ', result)
-            if (result):
-                print('result is: ', result, '... Trying to send email')
-                print('trying to register connection...')
-                
+            if (result):        
                 print('trying to set up SMTP connection...')
                 yag = yagmail.SMTP(user=resetEmail)
                 print('setting contents...')
@@ -360,16 +391,49 @@ def reset_password():
 
     return ''
 
+@app.route('/websocket')
+def websocket():
+    if request.environ.get('wsgi.websocket'):
+        ws = request.environ['wsgi.websocket']
+        token = ws.receive()
+        email = database_helper.validate_logged_in(token)
+        #print('got email from validate_logged_in in websocket server.py', email)
+        email = email[0]
+        #print(database_helper.validate_user(token))
+        if database_helper.validate_user(token):
+            if email in sockets:
+                # oldSocket is the existing entry
+                oldSocket = sockets[email]
+                try:
+                    message = {
+                        'data': 'sign_out'
+                    }
+                    oldSocket.send(json.dumps(message))
+                except WebSocketError as e:
+                    print('ERROR (server.py websocket): ', e)
+                del sockets[email]
+            sockets[email] = ws
+            push_websocket_active_users()
+            push_websocket_total_posts()
+
+            while True:
+                try:
+                    ws.receive()
+                except WebSocketError as e:
+                    print('ERROR (server.py websocket)', e)
+                    return ''
+    return ''
+
 def push_websocket_active_users():
     total_users = database_helper.get_total_users()
     print('----------push_websocket_active_users------------')
-    print('total users: ' , total_users)
     message = {
         'dataMsg': 'users',
         'online_users' : len(sockets),
         'total_users' : total_users
     }
-    print('broadcasting message: ', message)
+    print('Online users: ', message['online_users'])
+    print('Total users: ', message['total_users'])
     for users in sockets.keys():
         #print('users', users)
         sockets[users].send(json.dumps(message))
@@ -377,17 +441,16 @@ def push_websocket_active_users():
 def push_websocket_total_posts():
     total_posts = database_helper.get_total_messages()
     print('----------push_websocket_total_posts------------')
-    print('total_posts: ' , total_posts[0])
     print(sockets)
     for email in sockets.keys():
-        print('email', email)
         my_posts = database_helper.get_total_user_messages(email)
         message = {
         'dataMsg': 'posts',
         'my_posts' :  my_posts[0],
         'total_posts' : total_posts[0]
         }
-        print('sending message: ', message, ' to: ',sockets[email])
+        print('total_posts: ' , total_posts[0])
+        print('My posts: ', message['my_posts'])
         sockets[email].send(json.dumps(message))
 
 def validation(email, pwd, firstName, familyName, gender, city, country):

@@ -64,10 +64,11 @@ def login_user(email):
     """
     try:
         token = generate_token()
-        print("HELPER: inserting token", token)
+        
         get_db().execute(
             "INSERT INTO logged_in VALUES(?,?)", [email, token])
         get_db().commit()
+        print("HELPER: logging in token", token)
         return token
     except Exception as ex:
         print("Exception: ", ex)
@@ -109,6 +110,7 @@ def find_user(email):
         return True
 
 
+
 def logout_user(token):
     """Log out user
         Logs out current user and deletes it from logged_in
@@ -136,10 +138,11 @@ def validate_logged_in(token):
         cursor = get_db().execute("SELECT email FROM logged_in WHERE token=?",
                                   [token])
         email = cursor.fetchone()
+        #print('VALIDATE_LOGGED_IN: This email is in logged_in')
         cursor.close()
         return email
     except:
-        print('VALIDATE_LOGGED_IN: There is no email in logged_in')
+        #print('VALIDATE_LOGGED_IN: There is no email in logged_in')
         return False
 
 
@@ -248,7 +251,7 @@ def get_user_messages_by_token(token):
     try:
         email = validate_logged_in(token)
         if (email == None):
-            print("email is None")
+            print("email is None in getusermsgtoken")
             return False
         cursor = get_db().execute(
             "SELECT sender, message FROM wall_of_text WHERE receiver=?", [email[0]])
@@ -277,7 +280,7 @@ def get_user_messages_by_email(token, email):
             return False
         # print('HELPER: email get from: ', email)
         cursor = get_db().execute(
-            "SELECT sender, message  FROM wall_of_text WHERE receiver=?", [email])
+            "SELECT sender, message FROM wall_of_text WHERE receiver=?", [email])
         messages = cursor.fetchall()
         # print('HELPER: Getusermessagesemail messages: ', messages)
         cursor.close()
@@ -354,26 +357,58 @@ def reset_password(email, oldPwd, newPwd):
 
 # FOR CHARTS 
 def get_total_users():
-    cursor = get_db().execute("SELECT count(email) FROM users")
-    users = cursor.fetchone()
-    cursor.close()
-    return users[0]
+    try:
+        cursor = get_db().execute("SELECT count(email) FROM users")
+        users = cursor.fetchone()
+        cursor.close()
+        return users[0]
+    except: 
+        return False
 
 def get_total_messages():
-    cursor = get_db().execute("SELECT count(id) FROM wall_of_text")
-    messages = cursor.fetchone()
-    cursor.close()
-    return messages
-
+    try:
+        cursor = get_db().execute("SELECT count(id) FROM wall_of_text")
+        messages = cursor.fetchone()
+        cursor.close()
+        return messages
+    except: 
+        return False
+    
 def get_total_user_messages(email):
-    cursor = get_db().execute("SELECT count(id) FROM wall_of_text WHERE receiver=?", [email])
-    messages = cursor.fetchone()
-    cursor.close()
-    return messages
+    try:
+        cursor = get_db().execute("SELECT count(id) FROM wall_of_text WHERE receiver=?", [email])
+        messages = cursor.fetchone()
+        cursor.close()
+        return messages
+    except: 
+        return False
 
 def get_email_from_token(token):
-    cursor = get_db().execute("SELECT email FROM logged_in WHERE token=?", [token])
-    email = cursor.fetchone()
-    cursor.close()
-    return email
+    try:
+        cursor = get_db().execute("SELECT email FROM logged_in WHERE token=?", [token])
+        email = cursor.fetchone()
+        cursor.close()
+        return email
+    except: 
+        return False
 
+# FOR HASHING
+def get_hashed_password(email):
+    try:
+        cursor = get_db().execute("SELECT pwd FROM users WHERE email=?", [email])
+        password = cursor.fetchone()
+        cursor.close()
+        print('HELPER: returning hashed password: ', password[0], ' belonging to email:',email)
+        return password[0]
+    except: 
+        return False
+def query_db(query, args=(), one=False): # Get the cursor, execute, and fetch results
+    cur = get_db().execute(query, args)
+    rv = cur.fetchall()
+    cur.close
+    return (rv[0] if rv else None) if one else rv
+
+def get_token_from_email(email):
+    logged_in_user_by_token = query_db("SELECT token FROM logged_in WHERE email=?", [email])
+    return logged_in_user_by_token[0]
+    

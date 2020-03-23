@@ -64,8 +64,10 @@ logInValidation = function(signInForm) {
 			if (http.readyState == 4 && http.status == 200) {
 				var returnObject = JSON.parse(http.responseText);
 				if (returnObject.success) {
+					log('signed in. Setting key to: ' + returnObject.key);
 					localStorage.setItem('token', returnObject.token);
 					localStorage.setItem('email', signInForm.logInEmail.value);
+					localStorage.setItem('key', returnObject.key);
 					document.getElementById('view').innerHTML = document.getElementById('profileview').innerHTML;
 					document.getElementById('defaultOpen').click();
 					document.getElementById('defaultOpen').style.backgroundColor = '#333';
@@ -139,12 +141,13 @@ signUpValidation = function(signUpForm) {
  */
 function displayHome() {
 	var http = new XMLHttpRequest();
+	var payload;
 	http.onreadystatechange = function(ev) {
 		if (http.readyState == 4 && http.status == 200) {
 			document.getElementById('view').innerHTML = document.getElementById('profileview').innerHTML;
 			var returnObject = JSON.parse(http.responseText);
 			var userData = returnObject;
-
+			payload = userData;
 			document.getElementById('LName').innerHTML = userData.firstName;
 			document.getElementById('LFamilyName').innerHTML = userData.familyName;
 			document.getElementById('LGender').innerHTML = userData.gender;
@@ -154,12 +157,15 @@ function displayHome() {
 			updateMessages();
 		}
 	};
+	var email = localStorage.getItem('email');
+	var token = localStorage.getItem('token');
+	var hashed_token = sha256(token + payload);
 	var url = '/get_user_data_by_token';
 	var params = JSON.stringify({
-		token: localStorage.getItem('token'),
-		email: localStorage.getItem('email')
+		email: email,
+		payload: payload
 	});
-	XHttpPost(http, url, params, localStorage.getItem('token'));
+	XHttpPost(http, url, params, hashed_token);
 }
 /* ------------------      HOME / POST MESSAGE       ----------------------- */
 /**
@@ -185,7 +191,6 @@ function postMessage() {
 		}
 	};
 	var params = JSON.stringify({
-		token: token,
 		receiver: receiver,
 		postedMessage: postedMessage
 	});
@@ -199,6 +204,7 @@ function postMessage() {
  */
 function updateMessages() {
 	var container = document.getElementById('allMessages');
+	var payload;
 	var http = new XMLHttpRequest();
 	var empty = 'No messages yet!';
 	http.onreadystatechange = function(ev) {
@@ -214,17 +220,23 @@ function updateMessages() {
 				} else if (messageData.length == 0) {
 					container.innerHTML = empty;
 				}
+				payload = returnList;
 				container.innerHTML = returnList;
 			} else {
 				container.innerHTML = returnObject.message;
 			}
 		}
 	};
+	var email = localStorage.getItem('email');
+	var token = localStorage.getItem('token');
+	var hashed_token = sha256(token + payload);
+
 	var url = '/get_user_messages_by_token';
 	var params = JSON.stringify({
-		token: localStorage.getItem('token')
+		email: email,
+		payload: payload
 	});
-	XHttpPost(http, url, params, localStorage.getItem('token'));
+	XHttpPost(http, url, params, hashed_token);
 }
 
 /* ------------------      BROWSE / SEARCH USER       ----------------------- */
@@ -232,9 +244,9 @@ function updateMessages() {
  * Displays searched user personal info
  */
 function searchUser() {
-	var userEmail = document.getElementById('searchedEmail').value;
-	var mailOk = validateEmail(userEmail);
-
+	var email = document.getElementById('searchedEmail').value;
+	var mailOk = validateEmail(email);
+	var payload;
 	var errorMessage = document.getElementById('emailError');
 	if (mailOk) {
 		var http = new XMLHttpRequest();
@@ -242,10 +254,10 @@ function searchUser() {
 			if (http.readyState == 4 && http.status == 200) {
 				var returnObject = JSON.parse(http.responseText);
 				if (returnObject.success) {
-					localStorage.setItem('search', userEmail);
+					localStorage.setItem('search', email);
 					if (localStorage.getItem('search') != null) {
 						var userData = returnObject;
-
+						payload = userData;
 						document.getElementById('OName').innerHTML = userData.firstName;
 						document.getElementById('OFamilyName').innerHTML = userData.familyName;
 						document.getElementById('OGender').innerHTML = userData.gender;
@@ -261,11 +273,15 @@ function searchUser() {
 				}
 			}
 		};
+		var token = localStorage.getItem('token');
+		var hashed_token = sha256(token + payload);
+
 		var url = '/get_user_data_by_email';
 		var params = JSON.stringify({
-			email: userEmail
+			email: email,
+			payload: payload
 		});
-		XHttpPost(http, url, params, localStorage.getItem('token'));
+		XHttpPost(http, url, params, hashed_token);
 		return false;
 	} else {
 		errorMessage.innerText = 'Inputted email is not valid';
@@ -280,7 +296,8 @@ function searchUser() {
  */
 function updateBrowseMessages() {
 	var container = document.getElementById('allBrowseMessages');
-	var userEmail = document.getElementById('searchedEmail').value;
+	var email = document.getElementById('searchedEmail').value;
+	var payload;
 	var http = new XMLHttpRequest();
 	var empty = 'No messages yet!';
 	http.onreadystatechange = function(ev) {
@@ -296,29 +313,31 @@ function updateBrowseMessages() {
 				} else {
 					container.innerHTML = empty;
 				}
+				payload = returnList;
 				container.innerHTML = returnList;
 			} else {
 				container.innerHTML = returnObject.message;
 			}
 		}
 	};
+	var token = localStorage.getItem('token');
+	var hashed_token = sha256(token + payload);
+
 	var url = '/get_user_messages_by_email';
 	var params = JSON.stringify({
-		token: localStorage.getItem('token'),
-		email: userEmail
+		email: email,
+		payload: payload
 	});
-	XHttpPost(http, url, params, localStorage.getItem('token'));
+	XHttpPost(http, url, params, hashed_token);
 }
 
 /* ------------------      BROWSE / POST BROWSE MESSAGES       ----------------------- */
 /**
  */
 function postBrowseMessage() {
-	var token = localStorage.getItem('token');
 	var receiver = localStorage.getItem('search');
 	var postedBrowseMessage = document.getElementsByName('areaBrowseText');
 	postedBrowseMessage = postedBrowseMessage[0].value;
-
 	var http = new XMLHttpRequest();
 	http.onreadystatechange = function(ev) {
 		if (http.readyState == 4 && http.status == 200) {
@@ -331,9 +350,9 @@ function postBrowseMessage() {
 			}
 		}
 	};
+	var token = localStorage.getItem('token');
 
 	var params = JSON.stringify({
-		token: token,
 		receiver: receiver,
 		postedMessage: postedBrowseMessage
 	});
@@ -349,6 +368,7 @@ function postBrowseMessage() {
 
 function signOut() {
 	var http = new XMLHttpRequest();
+
 	http.onreadystatechange = function(ev) {
 		if (http.readyState == 4 && http.status == 200) {
 			var returnObject = JSON.parse(http.responseText);
@@ -357,6 +377,7 @@ function signOut() {
 				localStorage.removeItem('state');
 				localStorage.removeItem('search');
 				localStorage.removeItem('email');
+				localStorage.removeItem('key');
 				log('Logging out user...');
 				displayView();
 			} else {
@@ -364,11 +385,14 @@ function signOut() {
 			}
 		}
 	};
+	var email = localStorage.getItem('email');
+	var token = localStorage.getItem('token');
+	var hashed_token = sha256(token + email);
+
 	var params = JSON.stringify({
-		token: localStorage.getItem('token'),
-		email: localStorage.getItem('email')
+		email: email
 	});
-	XHttpPost(http, '/sign_out', params, localStorage.getItem('token'));
+	XHttpPost(http, '/sign_out', params, hashed_token);
 	return false;
 }
 
@@ -379,7 +403,6 @@ function signOut() {
 function changePwd() {
 	var http = new XMLHttpRequest();
 	var message = document.getElementById('changePwdMessage');
-	var token = localStorage.getItem('token');
 	var oldPwd = document.getElementsByName('oldLoginPwd')[0].value;
 	var newPwd = document.getElementsByName('newLoginPwd')[0].value;
 	var newRepeatedPwd = document.getElementsByName('newRepeatedLoginPwd')[0].value;
@@ -412,15 +435,56 @@ function changePwd() {
 			}
 		}
 	};
-
+	var token = localStorage.getItem('token');
+	var email = localStorage.getItem('email');
+	var hashed_token = sha256(token + oldPwd + newPwd + email);
 	var params = JSON.stringify({
 		oldPwd: oldPwd,
-		newPwd: newPwd
+		newPwd: newPwd,
+		email: email
 	});
-	XHttpPost(http, '/change_password', params, localStorage.getItem('token'));
+	XHttpPost(http, '/change_password', params, hashed_token);
 	return false;
 }
+/* ------------------      MISC / RESET PASSWORD     ----------------------- */
+/**
+ * Resets and sends email to server
+ */
+function resetPassword() {
+	var email = document.getElementById('resetEmail').value;
+	var oldPwd = document.getElementsByName('oldResetLoginPwd')[0].value;
 
+	var mailOk = validateEmail(email);
+	var errorMessage = document.getElementById('resetMessage');
+	if (mailOk) {
+		var http = new XMLHttpRequest();
+		http.onreadystatechange = function(ev) {
+			if (http.readyState == 4 && http.status == 200) {
+				var returnObject = JSON.parse(http.responseText);
+				if (returnObject.success) {
+					errorMessage.innerHTML = returnObject.message;
+				} else {
+					errorMessage.innerHTML = returnObject.message;
+				}
+			}
+		};
+		var token = localStorage.getItem('token');
+		var hashed_token = sha256(token + oldPwd + email);
+
+		var url = '/reset_password';
+		var params = JSON.stringify({
+			email: email,
+			oldPwd: oldPwd
+		});
+
+		XHttpPost(http, url, params, hashed_token);
+		return false;
+	} else {
+		errorMessage.innerText = 'Inputted email is not valid';
+		log('Inputted email is not valid');
+	}
+	return false;
+}
 /* ------------------      MISC / XML       ----------------------- */
 /**
  * Performs a POST XML HTTP request with given parameters and sets token to request header
@@ -429,6 +493,7 @@ XHttpPost = function(http, url, params, token) {
 	http.open('POST', url, true);
 	http.setRequestHeader('Content-Type', 'application/json');
 	if (token) {
+		log('requesting: ' + url + ' with (hashed) token: ' + token);
 		http.setRequestHeader('token', token);
 	}
 	http.send(params);
@@ -441,6 +506,7 @@ XHttpPost = function(http, url, params, token) {
 function connectToSocket() {
 	var ws = new WebSocket('ws://' + document.domain + ':8080/websocket');
 	ws.onopen = function(event) {
+		console.debug('WebSocket opened:', message);
 		var token = localStorage.getItem('token');
 		ws.send(token);
 	};
@@ -530,42 +596,7 @@ function connectToSocket() {
 	};
 	isLocal = true;
 }
-/* ------------------      MISC / RESET PASSWORD     ----------------------- */
-/**
- * Resets and sends email to server
- */
-function resetPassword() {
-	var userEmail = document.getElementById('resetEmail').value;
-	var oldPwd = document.getElementsByName('oldResetLoginPwd')[0].value;
 
-	var mailOk = validateEmail(userEmail);
-	var errorMessage = document.getElementById('resetMessage');
-	if (mailOk) {
-		var http = new XMLHttpRequest();
-		http.onreadystatechange = function(ev) {
-			if (http.readyState == 4 && http.status == 200) {
-				var returnObject = JSON.parse(http.responseText);
-				if (returnObject.success) {
-					errorMessage.innerHTML = returnObject.message;
-				} else {
-					errorMessage.innerHTML = returnObject.message;
-				}
-			}
-		};
-		var url = '/reset_password';
-		var params = JSON.stringify({
-			email: userEmail,
-			oldPwd: oldPwd
-		});
-
-		XHttpPost(http, url, params);
-		return false;
-	} else {
-		errorMessage.innerText = 'Inputted email is not valid';
-		log('Inputted email is not valid');
-	}
-	return false;
-}
 /* ------------------      MISC / HELPER FUNCTIONS     ----------------------- */
 function validateEmail(email) {
 	var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -573,6 +604,7 @@ function validateEmail(email) {
 }
 function checkLocalStorage() {
 	log('Token: ' + localStorage.getItem('token'));
+	log('User key: ' + localStorage.getItem('key'));
 	log('Email: ' + localStorage.getItem('email'));
 	log('State: ' + localStorage.getItem('state'));
 	log('Last searched user: ' + localStorage.getItem('search'));

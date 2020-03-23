@@ -4,7 +4,6 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>TDDD97 Labs by Samuel</title>
-    <script src="static/sha.js" type="text/javascript"></script>
     <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
     <link href="static/client.css" type="text/css" rel="stylesheet">
     <!-- WELCOME VIEW  -->
@@ -208,8 +207,11 @@
                     </form>
                 </div>
                 <button class="button" type="submit" value="signOutValue" onclick="signOut()">Sign Out</button>
+                
             </div>
+            <hr/>
             <div id="chartsData-container">
+                
                 <canvas id="usersChart"></canvas>
                 <canvas id="postsChart"></canvas>
             </div>
@@ -234,7 +236,8 @@
         </div>
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
-    <script src="static/utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
     <script src="static/client.js"></script>
 </head>
 <body>
